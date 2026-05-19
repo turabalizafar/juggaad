@@ -1,8 +1,7 @@
 """
 Firestore client wrapper.
 Uses the Firebase Admin SDK (already authenticated via GOOGLE_APPLICATION_CREDENTIALS).
-Provides simple CRUD helpers used by endpoint logic.
-NO trace logging — traces are not stored in Firestore.
+Provides CRUD helpers + agent trace appending for real-time Flutter streaming.
 """
 
 import firebase_admin
@@ -30,6 +29,8 @@ class FirestoreClient:
     def db(self):
         """Direct access to the Firestore client for advanced queries."""
         return self._db
+
+    # ── CRUD helpers ────────────────────────────────────────────────────
 
     def add_document(self, collection: str, data: dict, doc_id: str | None = None) -> str:
         """
@@ -99,3 +100,27 @@ class FirestoreClient:
     def update_document(self, collection: str, doc_id: str, data: dict) -> None:
         """Update fields on an existing document."""
         self._db.collection(collection).document(doc_id).update(data)
+
+    # ── Agent Trace Logging ─────────────────────────────────────────────
+
+    def append_trace(self, request_id: str, step: str, message: str, timestamp: str) -> None:
+        """
+        Append a trace step to the service_requests/{request_id} document.
+
+        Uses Firestore arrayUnion so the Flutter app can stream updates
+        in real-time via a snapshot listener on the document.
+
+        Args:
+            request_id: The service request document ID.
+            step: Short step identifier (e.g. 'extracting_intent').
+            message: Human-readable description of what happened.
+            timestamp: ISO 8601 timestamp string.
+        """
+        trace_entry = {
+            "step": step,
+            "message": message,
+            "timestamp": timestamp,
+        }
+        self._db.collection("service_requests").document(request_id).update(
+            {"agent_trace": firestore.ArrayUnion([trace_entry])}
+        )

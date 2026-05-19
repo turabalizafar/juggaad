@@ -1,107 +1,111 @@
 # Tasks — AISeekho Challenge 2
 
-Build order: backend flow first, UI second. Mock data ready before any endpoint tested.
+Build order: backend flow first, UI in parallel. Mock data ready before any endpoint tested.
 
 ---
 
 ## Day 1: Foundation
 
 ### Task 1.1 — Repo + Structure
-- [ ] Create GitHub repo
-- [ ] Add `docs/`, `backend/`, `mobile/` folders
-- [ ] Add `.env.example`, `README.md`
-- [ ] Add all teammates as collaborators
-- [ ] Commit this `docs/` folder
+- [x] Create GitHub repo
+- [x] Add `docs/`, `backend/`, `mobile/` folders
+- [x] Add `.env.example`, `README.md`
+- [x] Commit this `docs/` folder
 
 ### Task 1.2 — Mock Provider Data
-- [ ] Create `backend/data/providers.json`
-- [ ] Seed 30 AC technician providers (Lahore-DHA area)
-- [ ] Fields: id, name, rating, lat, lng, availability_status, base_price, response_time_estimate
-- [ ] Include ~5 unavailable providers (for realism in ranking)
-- [ ] Seed to Firestore `providers` collection
+- [x] Create `backend/data/mock_providers.json`
+- [x] Seed ~300 providers across 10 categories and 18 cities (3 geographic clusters)
+- [x] Fields: id, name, phone_number, service_type, city, area, cluster, rating, lat, lng, availability_status, base_price, response_time_minutes
+- [x] All providers use phone: +923266142848 (live demo routing)
+- [x] ~20% unavailable providers (for realism in ranking)
+- [x] Seed to Firestore `providers` collection (clear existing first)
 
 ### Task 1.3 — FastAPI Skeleton
-- [ ] Setup FastAPI app with CORS
-- [ ] Setup Firebase Admin SDK (for Firestore + Auth verify)
-- [ ] Gemini client init (google-generativeai or vertexai SDK)
-- [ ] Health check: `GET /health` → `{"status": "ok"}`
-- [ ] Pydantic schemas for all request/response shapes
+- [x] Setup FastAPI app with CORS
+- [x] Setup Firebase Admin SDK (for Firestore + Auth verify)
+- [x] Gemini client init (google-genai SDK, Vertex AI backend)
+- [x] Health check: `GET /health` → `{"status": "ok"}`
+- [x] Pydantic schemas for all request/response shapes (includes phone, traces, conversational flow)
 
-### Task 1.4 — Parse Request Endpoint
-- [ ] `POST /api/v1/parse-request`
-- [ ] Call Gemini with Prompt 1
-- [ ] Parse JSON response, validate with Pydantic
-- [ ] Save `service_request` to Firestore
-- [ ] Log trace step: `parse_request`
-- [ ] Return structured intent JSON
+### Task 1.4 — Architecture Realignment (Step 2.5)
+- [x] Delete all /demo/run and guest flow references
+- [x] Add agent trace logging to Firestore (arrayUnion on service_requests)
+- [x] Restructure endpoints: /parse, /search, /book
+- [x] Rewrite schemas: ParseInput/ParseResponse, SearchRequest/SearchResponse, BookRequest/BookResponse
+- [x] Add TraceStep shared model
+- [x] Update all docs to match new architecture
 
 ---
 
-## Day 2: Core Flow
+## Day 2: Core Flow (Step 3+)
 
-### Task 2.1 — Provider Search + Ranking
-- [ ] `POST /api/v1/providers/search`
-- [ ] Filter providers by `service_type` from mock data
-- [ ] Call Maps Distance Matrix API for top 10 candidates
+### Task 2.1 — Parse Endpoint
+- [ ] `POST /api/v1/parse`
+- [ ] Call Gemini with Prompt 1 (JSON extraction only)
+- [ ] Detect missing_fields deterministically in Python
+- [ ] Generate ai_message with hardcoded strings (NOT Gemini)
+- [ ] Create service_request document in Firestore with agent_trace[]
+- [ ] Append trace steps via arrayUnion for Flutter streaming
+- [ ] Return ParseResponse with status: complete|incomplete|service_not_available
+
+### Task 2.2 — Search Endpoint
+- [ ] `POST /api/v1/search`
+- [ ] Filter providers by service_type + city from Firestore
+- [ ] Call Maps Distance Matrix API for available candidates
 - [ ] Apply ranking formula (availability × distance × rating × response_time)
-- [ ] Call Gemini with Prompt 2 for top result explanation
-- [ ] Log trace step: `provider_search`
-- [ ] Return ranked list with explanation
+- [ ] Call Gemini Prompt 2 for per-provider explanation
+- [ ] Append trace steps to service_requests document
+- [ ] Return top 3 providers with reasoning
 
-### Task 2.2 — Booking Simulation
-- [ ] `POST /api/v1/bookings/create`
-- [ ] Create booking record in Firestore
-- [ ] Set status: `confirmed`
-- [ ] Return confirmation text + ETA
-- [ ] `GET /api/v1/bookings/{booking_id}`
-- [ ] Log trace step: `booking_created`
+### Task 2.3 — Book Endpoint
+- [ ] `POST /api/v1/book`
+- [ ] Create booking record in Firestore with tracking_id
+- [ ] Set status: confirmed
+- [ ] Return BookResponse with provider_phone, tracking_id, ETA
+- [ ] `GET /api/v1/booking/{booking_id}` for tracking screen
 
-### Task 2.3 — Follow-up Service
-- [ ] `POST /api/v1/followups/reminder`
+### Task 2.4 — Follow-up Service
+- [ ] `POST /api/v1/followup`
 - [ ] Call Gemini with Prompt 3 based on trigger type
 - [ ] Return reminder message
-- [ ] Log trace step: `followup_generated`
 
-### Task 2.4 — Trace Endpoint
-- [ ] `GET /api/v1/traces/{request_id}`
-- [ ] Read all trace steps from Firestore for given request_id
-- [ ] Return ordered step log
-
-### Task 2.5 — Demo Endpoint
-- [ ] `POST /api/v1/demo/run`
-- [ ] Chain: parse → search → book → followup in one call
-- [ ] Return full pipeline result
-- [ ] Used for demo button in Flutter
+### Task 2.5 — History Endpoints
+- [ ] `GET /api/v1/history/requests` — past service requests for user
+- [ ] `GET /api/v1/history/bookings` — past bookings with provider_phone for "Call Again"
+- [ ] Filter by user_id from auth token
 
 ---
 
-## Day 3: Flutter + Polish
+## Day 3: Flutter + Polish (frontend teammate — parallel)
 
 ### Task 3.1 — Flutter Setup
 - [ ] Flutter project init with Riverpod + Dio + Firebase
 - [ ] Configure google_maps_flutter
 - [ ] Setup Dio base URL + auth interceptor (attach Firebase JWT)
+- [ ] Setup Firestore StreamBuilder for agent trace animation
 
 ### Task 3.2 — Core Screens (priority order)
-- [ ] Screen 1: Login/Welcome
-- [ ] Screen 2: Home (input box + demo button)
-- [ ] Screen 3: Parsed Request Preview
-- [ ] Screen 4: Provider Ranking List
-- [ ] Screen 5: Map view with provider pins
-- [ ] Screen 6: Booking Confirmation
-- [ ] Screen 7: Tracking / Follow-up
+- [ ] Screen 1: Login/Welcome (Firebase Auth)
+- [ ] Screen 2: Home (input box, no demo button)
+- [ ] Screen 3: Agent Thinking animation (StreamBuilder on service_requests)
+- [ ] Screen 4: Parsed Preview (editable form)
+- [ ] Screen 5: Provider Ranking List (top 3 with reasoning)
+- [ ] Screen 6: Booking Confirmation (tracking_id, provider phone)
+- [ ] Screen 7: Tracking / Map view
+- [ ] Screen 8: History (Call Again)
 
 ### Task 3.3 — Connect Frontend to Backend
-- [ ] Home → POST /parse-request → show parsed preview
-- [ ] Parsed preview → POST /providers/search → show list
-- [ ] Provider selected → POST /bookings/create → show confirmation
-- [ ] Confirmation → POST /followups/reminder → show reminder
+- [ ] Home → POST /parse → show thinking animation → show parsed preview
+- [ ] Parsed preview → POST /search → show provider list with reasoning
+- [ ] Provider selected → POST /book → show confirmation
+- [ ] Confirmation → POST /followup → show reminder
+- [ ] History → GET /history/bookings → show Call Again
 
-### Task 3.4 — Demo Polish
-- [ ] "Run Demo" button on Home screen → POST /demo/run → full flow auto-play
+### Task 3.4 — Polish
 - [ ] Loading states on all network calls
 - [ ] Map shows provider pins
-- [ ] Error states for no providers found
+- [ ] Error states for service_not_available, no providers found, incomplete info
+- [ ] Real-time trace animation in thinking screen
 
 ### Task 3.5 — Evidence & Submission
 - [ ] Screenshot each screen
@@ -120,4 +124,5 @@ Build order: backend flow first, UI second. Mock data ready before any endpoint 
 - Multi-language UI (Urdu script rendering)
 - Push notifications (mock only)
 - Admin dashboard
-- Any category beyond AC technician for demo
+- /demo/run or guest flow
+- AI-generated ai_message (hardcoded strings only)
