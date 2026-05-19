@@ -61,6 +61,7 @@ async def get_booking_history(
                 request_id=doc.get("request_id", ""),
                 provider_id=doc.get("provider_id", ""),
                 provider_name=doc.get("provider_name", "Unknown"),
+                provider_phone=doc.get("provider_phone", "+923266142848"),
                 service_type=doc.get("service_type", "unknown"),
                 status=doc.get("status", "unknown"),
                 time_slot=doc.get("time_slot", ""),

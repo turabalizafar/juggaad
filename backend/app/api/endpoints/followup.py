@@ -60,6 +60,17 @@ async def generate_followup(
             message = f"Hope everything went well with {provider_name}!"
 
     # 3. Compute fake "send_at" time
-    send_at = (datetime.now(timezone.utc) + timedelta(minutes=1)).isoformat()
+    now_ts = datetime.now(timezone.utc)
+    send_at = (now_ts + timedelta(minutes=1)).isoformat()
+
+    # 4. Append trace logging
+    request_id = booking.get("request_id")
+    if request_id:
+        fc.append_trace(
+            request_id,
+            "generating_followup",
+            f"Sent follow-up for trigger: {request.trigger}",
+            now_ts.isoformat()
+        )
 
     return FollowupResponse(message=message, send_at=send_at)

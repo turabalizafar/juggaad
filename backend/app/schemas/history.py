@@ -20,6 +20,7 @@ class HistoryBookingItem(BaseModel):
     request_id: str
     provider_id: str
     provider_name: str
+    provider_phone: str
     service_type: str
     status: str
     time_slot: str

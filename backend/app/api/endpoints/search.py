@@ -51,7 +51,12 @@ async def search_providers(
     req_id = request.request_id
     now = lambda: datetime.now(timezone.utc).isoformat()
 
-    # 1. Fetch providers from Firestore
+    # 1. Validate request_id exists
+    doc = fc.get_document("service_requests", req_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Service request not found.")
+
+    # 2. Fetch providers from Firestore
     fc.append_trace(
         req_id, 
         "querying_providers", 
@@ -72,12 +77,14 @@ async def search_providers(
     if not available_providers:
         # Update trace and return empty
         fc.append_trace(req_id, "ranking_complete", "No available providers found.", now())
+        
+        updated_doc = fc.get_document("service_requests", req_id) or {}
         return SearchResponse(
             request_id=req_id,
             providers=[],
             total_found=0,
             top_3_reasoning="Unfortunately, no available providers were found in your area.",
-            agent_trace=[TraceStep(**ts) for ts in fc.get_document("service_requests", req_id).get("agent_trace", [])]
+            agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
         )
 
     # 3. Pre-sort by straight-line distance to avoid exceeding Maps API limits (max 25)
@@ -163,8 +170,8 @@ async def search_providers(
         now()
     )
 
-    doc = fc.get_document("service_requests", req_id)
-    agent_trace = [TraceStep(**ts) for ts in doc.get("agent_trace", [])]
+    updated_doc = fc.get_document("service_requests", req_id) or {}
+    agent_trace = [TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
 
     return SearchResponse(
         request_id=req_id,
