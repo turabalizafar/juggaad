@@ -55,7 +55,3 @@ __pycache__/
 
 #secrets
 *.json
-
-#traces
-
-*.txt
