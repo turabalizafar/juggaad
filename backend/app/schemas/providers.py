@@ -38,11 +38,12 @@ class Provider(BaseModel):
 class SearchResponse(BaseModel):
     """Response from POST /api/v1/search.
 
-    Returns top 3 providers with per-provider reasoning,
+    Returns top providers with per-provider reasoning,
     plus an overall reasoning sentence and agent trace.
     """
     request_id: str
     providers: list[Provider]
     total_found: int
     top_3_reasoning: str
+    ai_header_text: str
     agent_trace: list[TraceStep] = []

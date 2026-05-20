@@ -91,6 +91,7 @@ async def search_providers(
             providers=[],
             total_found=0,
             top_3_reasoning="Unfortunately, no available providers were found in your area.",
+            ai_header_text="No Matches Found",
             agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
         )
 
@@ -108,6 +109,7 @@ async def search_providers(
             providers=[],
             total_found=len(available_providers),
             top_3_reasoning="No providers found within a reasonable distance from your location.",
+            ai_header_text="No Matches Found",
             agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
         )
     
@@ -193,10 +195,18 @@ async def search_providers(
     updated_doc = fc.get_document("service_requests", req_id) or {}
     agent_trace = [TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
 
+    if len(final_providers) == 1:
+        ai_header_text = "Best Match Found for You"
+    elif len(final_providers) > 1:
+        ai_header_text = f"{len(final_providers)} Great Matches Near You"
+    else:
+        ai_header_text = "No Matches Found"
+
     return SearchResponse(
         request_id=req_id,
         providers=final_providers,
         total_found=len(available_providers),
         top_3_reasoning="These providers were selected based on their proximity, high ratings, and availability.",
+        ai_header_text=ai_header_text,
         agent_trace=agent_trace
     )

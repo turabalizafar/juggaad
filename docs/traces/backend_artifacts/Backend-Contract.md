@@ -69,7 +69,8 @@ JSON
 {
   "status": "success",
   "reasoning_message": "I found 3 highly-rated AC technicians near DHA. Usman is the closest and has a 5-star rating.",
-  "top_providers": [
+  "ai_header_text": "3 Great Matches Near You",
+  "providers": [
     {
       "provider_id": "prov_lh_ac_001",
       "name": "Usman AC Repair",

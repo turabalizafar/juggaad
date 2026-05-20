@@ -6,6 +6,7 @@ class SearchResponse {
   final List<Provider> providers;
   final int totalFound;
   final String top3Reasoning;
+  final String aiHeaderText;
   final List<AgentTrace> agentTrace;
 
   SearchResponse({
@@ -13,6 +14,7 @@ class SearchResponse {
     required this.providers,
     required this.totalFound,
     required this.top3Reasoning,
+    required this.aiHeaderText,
     required this.agentTrace,
   });
 
@@ -25,6 +27,7 @@ class SearchResponse {
           [],
       totalFound: json['total_found'] as int? ?? 0,
       top3Reasoning: json['top_3_reasoning'] as String? ?? '',
+      aiHeaderText: json['ai_header_text'] as String? ?? '',
       agentTrace: (json['agent_trace'] as List<dynamic>?)
               ?.map((e) => AgentTrace.fromJson(e as Map<String, dynamic>))
               .toList() ??

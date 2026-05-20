@@ -120,6 +120,7 @@ Deterministic. Filters + ranks providers. Calls Maps Distance Matrix. Uses Gemin
   ],
   "total_found": 12,
   "top_3_reasoning": "These 3 providers were selected based on proximity, rating, and availability in DHA Lahore.",
+  "ai_header_text": "3 Great Matches Near You",
   "agent_trace": [
     {"step": "querying_providers", "message": "Searching for AC technicians near DHA Lahore...", "timestamp": "..."},
     {"step": "calculating_distances", "message": "Computing distances for 12 available providers...", "timestamp": "..."},
