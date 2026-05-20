@@ -11,9 +11,8 @@ import '../models/user_profile.dart';
 
 class ApiService {
   late final Dio _dio;
-  // Use 10.0.2.2 for Android emulator to connect to localhost backend
-  // For physical devices or iOS, change this to your machine's local IP (e.g. 192.168.1.10)
-  final String _baseUrl = 'http://10.0.2.2:8000/api/v1';
+  // Strictly pointing to 127.0.0.1 for wireless ADB reverse proxy
+  final String _baseUrl = 'http://127.0.0.1:8000/api/v1';
 
   ApiService() {
     _dio = Dio(BaseOptions(
