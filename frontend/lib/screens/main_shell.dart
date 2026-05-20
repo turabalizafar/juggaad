@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'booking_history_screen.dart';
+import 'user_profile_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -15,7 +16,7 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const BookingHistoryScreen(),
-    const Scaffold(body: Center(child: Text('Profile WIP'))),
+    const UserProfileScreen(),
   ];
 
   @override
