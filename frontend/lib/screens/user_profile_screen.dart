@@ -15,7 +15,7 @@ class UserProfileScreen extends ConsumerStatefulWidget {
 class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
-  bool _isEditing = false;
+  final bool _isEditing = false;
 
   @override
   void initState() {
@@ -230,7 +230,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                           onChanged: (val) {
                             // MVP: no dark mode yet
                           },
-                          activeColor: colorScheme.primary,
+                          activeThumbColor: colorScheme.primary,
                           inactiveTrackColor: colorScheme.surfaceContainerHighest,
                         ),
                         showBorder: false,

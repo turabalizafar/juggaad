@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:math' as math;
+
 import '../providers/orchestration_provider.dart';
 import '../providers/service_providers.dart';
 
@@ -104,12 +104,19 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                     // Fit bounds
                     Future.delayed(const Duration(milliseconds: 500), () {
                       if (_mapController != null) {
-                        LatLngBounds bounds;
-                        if (userLatLng.latitude > providerLatLng.latitude) {
-                          bounds = LatLngBounds(southwest: providerLatLng, northeast: userLatLng);
-                        } else {
-                          bounds = LatLngBounds(southwest: userLatLng, northeast: providerLatLng);
+                        // Guard: if coordinates are identical, skip bounds fitting
+                        if (userLatLng.latitude == providerLatLng.latitude &&
+                            userLatLng.longitude == providerLatLng.longitude) {
+                          return;
                         }
+                        final swLat = userLatLng.latitude < providerLatLng.latitude ? userLatLng.latitude : providerLatLng.latitude;
+                        final swLng = userLatLng.longitude < providerLatLng.longitude ? userLatLng.longitude : providerLatLng.longitude;
+                        final neLat = userLatLng.latitude > providerLatLng.latitude ? userLatLng.latitude : providerLatLng.latitude;
+                        final neLng = userLatLng.longitude > providerLatLng.longitude ? userLatLng.longitude : providerLatLng.longitude;
+                        final bounds = LatLngBounds(
+                          southwest: LatLng(swLat, swLng),
+                          northeast: LatLng(neLat, neLng),
+                        );
                         _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
                       }
                     });

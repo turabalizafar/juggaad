@@ -11,7 +11,6 @@ class BookingHistoryScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final historyBookings = ref.watch(historyBookingsProvider);
-    final historyRequests = ref.watch(historyRequestsProvider);
 
     return Scaffold(
       body: SafeArea(

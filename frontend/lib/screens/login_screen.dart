@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/service_providers.dart';
 import '../providers/profile_provider.dart';
-import 'home_screen.dart';
+import 'main_shell.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -139,7 +139,7 @@ class _PhoneDialogState extends ConsumerState<PhoneDialog> {
       Navigator.of(context).pop(); // Close dialog
       // Navigate to Home screen
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const MainShell()),
       );
     } catch (e) {
       if (!mounted) return;
