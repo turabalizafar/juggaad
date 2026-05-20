@@ -10,7 +10,7 @@ from google.genai.types import GenerateContentConfig
 class GeminiClient:
     """Wrapper around Gemini 1.5 Flash via google-genai SDK (Vertex AI backend)."""
 
-    MODEL_NAME = "gemini-2.0-flash"
+    MODEL_NAME = "gemini-1.5-flash-001"
 
     def __init__(self, project_id: str, region: str) -> None:
         """

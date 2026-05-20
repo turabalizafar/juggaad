@@ -55,3 +55,6 @@ __pycache__/
 
 #secrets
 *.json
+
+#test file
+test_e2e.py

@@ -94,6 +94,7 @@ async def parse_request(
         if intent.urgency == "null": intent.urgency = None
         
     except Exception as e:
+        print(f"\n[DEBUG PARSE ERROR] {e}\n")
         # Update trace with failure
         fail_now = datetime.now(timezone.utc).isoformat()
         fc.append_trace(request_id, "parse_failed", f"Failed to parse request: {e}", fail_now)
