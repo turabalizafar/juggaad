@@ -9,6 +9,8 @@ class Provider {
   final bool available;
   final double rankScore;
   final String explanation;
+  final double lat;
+  final double lng;
 
   Provider({
     required this.id,
@@ -21,6 +23,8 @@ class Provider {
     required this.available,
     required this.rankScore,
     required this.explanation,
+    required this.lat,
+    required this.lng,
   });
 
   factory Provider.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,8 @@ class Provider {
       available: json['available'] as bool? ?? false,
       rankScore: (json['rank_score'] as num?)?.toDouble() ?? 0.0,
       explanation: json['explanation'] as String? ?? '',
+      lat: (json['lat'] as num?)?.toDouble() ?? 31.5204, // default Lahore
+      lng: (json['lng'] as num?)?.toDouble() ?? 74.3587,
     );
   }
 
@@ -50,6 +56,8 @@ class Provider {
       'available': available,
       'rank_score': rankScore,
       'explanation': explanation,
+      'lat': lat,
+      'lng': lng,
     };
   }
 }

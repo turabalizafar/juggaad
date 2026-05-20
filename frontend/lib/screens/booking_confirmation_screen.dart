@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/orchestration_provider.dart';
+import 'tracking_screen.dart';
 
 class BookingConfirmationScreen extends ConsumerWidget {
   const BookingConfirmationScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<OrchestrationState>(orchestrationProvider, (previous, next) {
+      if (next == OrchestrationState.tracking) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const TrackingScreen()),
+        );
+      }
+    });
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final bookResponse = ref.watch(orchestrationProvider.notifier).bookResponse;

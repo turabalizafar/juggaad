@@ -22,12 +22,14 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
   OrchestrationNotifier(this._ref) : super(OrchestrationState.idle);
 
   String? currentRequestId;
+  String? selectedProviderId;
   ParseResponse? parseResponse;
   SearchResponse? searchResponse;
   BookResponse? bookResponse;
 
   void setIdle() {
     currentRequestId = null;
+    selectedProviderId = null;
     parseResponse = null;
     searchResponse = null;
     bookResponse = null;
@@ -85,6 +87,7 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
     if (currentRequestId == null) return;
     setBooking();
     try {
+      selectedProviderId = providerId;
       final apiService = _ref.read(apiServiceProvider);
       final response = await apiService.bookProvider(
         requestId: currentRequestId!,

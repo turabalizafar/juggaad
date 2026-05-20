@@ -226,12 +226,21 @@ For profile endpoints: `uid`, `phoneNumber`, `displayName`, `createdAt`
 ### Phase 6: Screen 6 — Tracking
 > Matches Stitch: **"Tracking - Teal & Amethyst"**
 
+#### [MODIFY] Data Models & Configuration
+- Update `lib/models/provider.dart` to include and parse `lat` and `lng` (double) from the backend JSON.
+- Add `google_maps_flutter` dependency to `pubspec.yaml`.
+- Update `android/app/src/main/AndroidManifest.xml` with a placeholder Google Maps API Key so you can paste your key later.
+- Update `ios/Runner/AppDelegate.swift` with a placeholder Google Maps API Key initialization.
+
 #### [NEW] `lib/screens/tracking_screen.dart`
-- Status timeline with steps (Confirmed → En Route → Arrived → Completed)
-- Map placeholder showing direction from user location to provider location (using Pakistani coordinates from backend)
-- Provider contact card
-- ETA countdown
-- "Send Follow-up" button → calls `POST /api/v1/followup`
+- Integrate `GoogleMap` widget showing a static map.
+- Calculate the geographic midpoint between the User's coordinates and the Provider's coordinates to set the initial `CameraPosition` zoom.
+- Drop exactly two `Marker` objects: one for the User, one for the Provider.
+- **DO NOT** implement Directions API polylines/routes (to conserve API credits).
+- Status timeline with updated steps: (Confirmed → Distance → Completed).
+- Floating card overlay on top of the map displaying the backend-provided ETA and tracking ID.
+- Provider contact card.
+- "Send Follow-up" button → calls `POST /api/v1/followup`.
 
 ---
 
