@@ -74,12 +74,14 @@ class ApiService {
     required String providerId,
     String? userPhoneNumber,
     required String timeSlot,
+    required int agreedEtaMinutes,
   }) async {
     final response = await _dio.post('/book', data: {
       'request_id': requestId,
       'provider_id': providerId,
       if (userPhoneNumber != null) 'user_phone_number': userPhoneNumber,
       'time_slot': timeSlot,
+      'agreed_eta_minutes': agreedEtaMinutes,
     });
     return BookResponse.fromJson(response.data);
   }

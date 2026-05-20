@@ -257,7 +257,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                           child: ElevatedButton(
                             onPressed: () {
                               final apiService = ref.read(apiServiceProvider);
-                              apiService.sendFollowup(bookResponse.bookingId, 'ping');
+                              apiService.sendFollowup(bookResponse.bookingId, 'pre_arrival');
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Follow-up sent to provider.')),
                               );

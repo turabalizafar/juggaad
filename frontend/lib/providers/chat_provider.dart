@@ -40,6 +40,12 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
           ...state,
           ChatMessage(text: response.aiMessage, isUser: false),
         ];
+      } else if (response.status == 'service_not_available') {
+        orchestrationNotifier.setIdle();
+        state = [
+          ...state,
+          ChatMessage(text: response.aiMessage, isUser: false),
+        ];
       } else {
         orchestrationNotifier.setParsedPreview(response);
       }

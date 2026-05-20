@@ -84,15 +84,20 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
   }
 
   Future<void> bookProvider(String providerId) async {
-    if (currentRequestId == null) return;
+    if (currentRequestId == null || searchResponse == null) return;
     setBooking();
     try {
       selectedProviderId = providerId;
+      
+      final provider = searchResponse!.providers.firstWhere((p) => p.id == providerId);
+      final agreedEta = provider.etaMinutes;
+
       final apiService = _ref.read(apiServiceProvider);
       final response = await apiService.bookProvider(
         requestId: currentRequestId!,
         providerId: providerId,
         timeSlot: 'ASAP',
+        agreedEtaMinutes: agreedEta,
       );
       setConfirmed(response);
     } catch (e) {
