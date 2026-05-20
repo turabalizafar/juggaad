@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/parse_response.dart';
 import '../models/search_response.dart';
 import '../models/book_response.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'service_providers.dart';
 
 enum OrchestrationState {
   idle,
@@ -15,7 +18,8 @@ enum OrchestrationState {
 }
 
 class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
-  OrchestrationNotifier() : super(OrchestrationState.idle);
+  final Ref _ref;
+  OrchestrationNotifier(this._ref) : super(OrchestrationState.idle);
 
   String? currentRequestId;
   ParseResponse? parseResponse;
@@ -31,7 +35,7 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
   }
 
   void setParsing() => state = OrchestrationState.parsing;
-  
+
   void setParsedPreview(ParseResponse response) {
     currentRequestId = response.requestId;
     parseResponse = response;
@@ -51,10 +55,50 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
     bookResponse = response;
     state = OrchestrationState.confirmed;
   }
-  
+
   void setTracking() => state = OrchestrationState.tracking;
+
+  Future<void> searchProviders() async {
+    if (parseResponse == null || currentRequestId == null) return;
+    setSearching();
+    try {
+      final locationService = _ref.read(locationServiceProvider);
+      final position = await locationService.getCurrentPosition();
+      
+      final apiService = _ref.read(apiServiceProvider);
+      final response = await apiService.searchProviders(
+        requestId: currentRequestId!,
+        serviceType: parseResponse!.intent.serviceType,
+        locationText: parseResponse!.intent.locationText,
+        userLat: position?.latitude ?? 31.5204, // Default to Lahore
+        userLng: position?.longitude ?? 74.3587,
+        urgency: parseResponse!.intent.urgency,
+      );
+      
+      setProviderResults(response);
+    } catch (e) {
+      setIdle();
+    }
+  }
+
+  Future<void> bookProvider(String providerId) async {
+    if (currentRequestId == null) return;
+    setBooking();
+    try {
+      final apiService = _ref.read(apiServiceProvider);
+      final response = await apiService.bookProvider(
+        requestId: currentRequestId!,
+        providerId: providerId,
+        timeSlot: 'ASAP',
+      );
+      setConfirmed(response);
+    } catch (e) {
+      setIdle();
+    }
+  }
 }
 
-final orchestrationProvider = StateNotifierProvider<OrchestrationNotifier, OrchestrationState>((ref) {
-  return OrchestrationNotifier();
-});
+final orchestrationProvider =
+    StateNotifierProvider<OrchestrationNotifier, OrchestrationState>((ref) {
+      return OrchestrationNotifier(ref);
+    });

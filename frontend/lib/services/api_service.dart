@@ -28,7 +28,7 @@ class ApiService {
         if (user != null) {
           final token = await user.getIdToken();
           if (token != null) {
-            options.headers['Authorization'] = 'Bearer \$token';
+            options.headers['Authorization'] = 'Bearer $token';
           }
         }
         return handler.next(options);
@@ -86,7 +86,7 @@ class ApiService {
   }
 
   Future<BookingStatusResponse> getBookingStatus(String bookingId) async {
-    final response = await _dio.get('/booking/\$bookingId');
+    final response = await _dio.get('/booking/$bookingId');
     return BookingStatusResponse.fromJson(response.data);
   }
 

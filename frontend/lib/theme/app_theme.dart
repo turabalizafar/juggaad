@@ -7,7 +7,7 @@ class AppTheme {
   static const Color onPrimary = Color(0xFFFFFFFF);
   static const Color primaryContainer = Color(0xFF008283);
   static const Color onPrimaryContainer = Color(0xFFF3FFFE);
-  
+
   static const Color secondary = Color(0xFF426464);
   static const Color onSecondary = Color(0xFFFFFFFF);
   static const Color secondaryContainer = Color(0xFFC4EAE9);
@@ -25,7 +25,7 @@ class AppTheme {
 
   static const Color background = Color(0xFFF6FAFA);
   static const Color onBackground = Color(0xFF171C1D);
-  
+
   static const Color surface = Color(0xFFF6FAFA);
   static const Color onSurface = Color(0xFF171C1D);
   static const Color surfaceVariant = Color(0xFFDFE3E3);
@@ -33,7 +33,7 @@ class AppTheme {
 
   static const Color outline = Color(0xFF6D7979);
   static const Color outlineVariant = Color(0xFFBDC9C8);
-  
+
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
   static const Color surfaceContainerLow = Color(0xFFF0F4F4);
   static const Color surfaceContainer = Color(0xFFEAEFEE);
@@ -69,12 +69,36 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: background,
       textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w700, color: onSurface),
-        displayMedium: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: onSurface),
-        titleLarge: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600, color: onSurface),
-        bodyLarge: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w400, color: onSurface),
-        bodyMedium: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: onSurfaceVariant),
-        labelLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: onSurfaceVariant),
+        displayLarge: GoogleFonts.inter(
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
+          color: onSurface,
+        ),
+        displayMedium: GoogleFonts.inter(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: onSurface,
+        ),
+        titleLarge: GoogleFonts.inter(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: onSurface,
+        ),
+        bodyLarge: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: onSurface,
+        ),
+        bodyMedium: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: onSurfaceVariant,
+        ),
+        labelLarge: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: onSurfaceVariant,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -85,7 +109,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -96,7 +123,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -117,7 +147,7 @@ class AppTheme {
         ),
         hintStyle: GoogleFonts.inter(color: onSurfaceVariant),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surfaceContainerLowest,
         elevation: 0,
         shape: RoundedRectangleBorder(
