@@ -12,7 +12,7 @@ class BookRequest(BaseModel):
     """
     request_id: str
     provider_id: str
-    user_phone_number: str
+    user_phone_number: str | None = None  # Optional — auto-filled from profile if omitted
     time_slot: str
 
 

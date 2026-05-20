@@ -38,6 +38,12 @@ async def create_booking(
 
     provider_name = provider.get("name", "Unknown Provider")
     provider_phone = provider.get("phone_number", "+923266142848")
+
+    # 1b. Resolve user phone number: use provided value, or fall back to profile
+    user_phone = request.user_phone_number
+    if not user_phone:
+        profile = fc.get_document("users", user_id)
+        user_phone = profile.get("phone_number", "") if profile else ""
     
     # 2. Add trace to service request
     fc.append_trace(req_id, "creating_booking", f"Reserving slot with {provider_name}...", now())
@@ -55,7 +61,7 @@ async def create_booking(
         "provider_id": request.provider_id,
         "provider_name": provider_name,
         "provider_phone": provider_phone,
-        "user_phone_number": request.user_phone_number,
+        "user_phone_number": user_phone,
         "time_slot": request.time_slot,
         "tracking_id": tracking_id,
         "status": "confirmed",

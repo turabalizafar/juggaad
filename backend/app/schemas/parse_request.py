@@ -13,6 +13,8 @@ class ParseInput(BaseModel):
     """
     raw_text: str
     language_hint: str | None = None
+    user_lat: float | None = None    # Device GPS latitude
+    user_lng: float | None = None    # Device GPS longitude
 
 
 class ParsedIntent(BaseModel):

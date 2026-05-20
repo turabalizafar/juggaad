@@ -73,7 +73,7 @@ async def parse_request(
     user_prompt = PROMPT_1_USER_TEMPLATE.format(raw_text=request.raw_text)
     
     try:
-        raw_response = gc.generate(PROMPT_1_SYSTEM, user_prompt, max_tokens=200)
+        raw_response = gc.generate(PROMPT_1_SYSTEM, user_prompt, max_tokens=300)
         # Strip potential markdown formatting (```json ... ```)
         cleaned_response = raw_response.strip()
         if cleaned_response.startswith("```json"):
@@ -93,6 +93,10 @@ async def parse_request(
         if intent.location_text == "null": intent.location_text = None
         if intent.urgency == "null": intent.urgency = None
         
+        # Deterministic fallback: issue_summary should never be null
+        if not intent.issue_summary:
+            intent.issue_summary = intent.service_type.replace("_", " ") + " service request"
+        
     except Exception as e:
         print(f"\n[DEBUG PARSE ERROR] {e}\n")
         # Update trace with failure
@@ -105,7 +109,12 @@ async def parse_request(
             detail="Could not understand the request. Please try again."
         )
 
-    # 4. Check for edge cases and missing fields
+    # 4. GPS fallback: if location_text is missing but device coords are present
+    has_gps = request.user_lat is not None and request.user_lng is not None
+    if not intent.location_text and has_gps:
+        intent.location_text = "Current Location"
+
+    # 5. Check for edge cases and missing fields
     missing_fields = []
     if not intent.location_text:
         missing_fields.append("location_text")
@@ -144,12 +153,17 @@ async def parse_request(
     fc.append_trace(request_id, trace_step, trace_msg, trace_now)
 
     # 7. Update Firestore document
-    fc.update_document("service_requests", request_id, {
+    update_data = {
         "status": req_status,
         "intent": intent.model_dump(),
         "missing_fields": missing_fields,
         "ai_message": ai_message,
-    })
+    }
+    # Store GPS coordinates if provided (for downstream /search fallback)
+    if has_gps:
+        update_data["user_lat"] = request.user_lat
+        update_data["user_lng"] = request.user_lng
+    fc.update_document("service_requests", request_id, update_data)
 
     # Fetch updated document to return full trace
     doc = fc.get_document("service_requests", request_id)

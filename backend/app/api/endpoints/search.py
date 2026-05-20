@@ -56,6 +56,13 @@ async def search_providers(
     if not doc:
         raise HTTPException(status_code=404, detail="Service request not found.")
 
+    # 1b. Fallback: if frontend didn't send real coords, use stored GPS from /parse
+    user_lat = request.user_lat
+    user_lng = request.user_lng
+    if user_lat == 0.0 and user_lng == 0.0:
+        user_lat = doc.get("user_lat", 0.0)
+        user_lng = doc.get("user_lng", 0.0)
+
     # 2. Fetch providers from Firestore
     fc.append_trace(
         req_id, 
@@ -89,7 +96,7 @@ async def search_providers(
 
     # 3. Pre-sort by straight-line distance to avoid exceeding Maps API limits (max 25)
     for p in available_providers:
-        p["_straight_dist"] = haversine_distance(request.user_lat, request.user_lng, p["lat"], p["lng"])
+        p["_straight_dist"] = haversine_distance(user_lat, user_lng, p["lat"], p["lng"])
     
     available_providers.sort(key=lambda x: x["_straight_dist"])
     top_candidates = available_providers[:25]
@@ -102,7 +109,7 @@ async def search_providers(
         now()
     )
     destinations = [(p["lat"], p["lng"]) for p in top_candidates]
-    matrix_results = mc.get_distance_matrix(request.user_lat, request.user_lng, destinations)
+    matrix_results = mc.get_distance_matrix(user_lat, user_lng, destinations)
 
     # 5. Calculate Rank Score
     # Formula: 0.4 * availability + 0.3 * distance + 0.2 * rating + 0.1 * response_time
