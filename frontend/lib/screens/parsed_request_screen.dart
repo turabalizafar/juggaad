@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/parsed_intent.dart';
+import '../models/provider.dart';
 import '../theme/app_theme.dart';
+import 'provider_results_screen.dart';
 
 class ParsedRequestScreen extends StatefulWidget {
   final ParsedIntent initialIntent;
@@ -84,9 +86,32 @@ class _ParsedRequestScreenState extends State<ParsedRequestScreen> {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
-                // TODO: POST /search
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Finding Providers...')),
+                // Mock Top Providers
+                final mockProviders = [
+                  Provider(
+                    id: 'p1', name: 'Usman AC Repair', phoneNumber: '+923001234567',
+                    rating: 4.8, distanceKm: 2.1, etaMinutes: 15, basePrice: 500,
+                    available: true, rankScore: 0.95, explanation: '',
+                  ),
+                  Provider(
+                    id: 'p2', name: 'Ali Tech Services', phoneNumber: '+923009876543',
+                    rating: 4.5, distanceKm: 3.5, etaMinutes: 25, basePrice: 400,
+                    available: true, rankScore: 0.85, explanation: '',
+                  ),
+                  Provider(
+                    id: 'p3', name: 'Rehan Cooling', phoneNumber: '+923211112222',
+                    rating: 4.9, distanceKm: 5.0, etaMinutes: 40, basePrice: 600,
+                    available: false, rankScore: 0.70, explanation: '',
+                  ),
+                ];
+                
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ProviderResultsScreen(
+                      providers: mockProviders,
+                      topReasoning: 'Usman was selected because he is the closest available technician with a top rating in your area.',
+                    ),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(

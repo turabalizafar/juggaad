@@ -33,7 +33,7 @@ dependencies:
   dio: ^5.9.2
   flutter_riverpod: ^3.2.1
   flutter_native_splash: ^2.4.5
-  google_generative_ai: ^0.7.6
+  google_generative_ai: ^0.4.7
   flutter_svg: ^2.1.1
   lottie: ^3.1.0
   # The following adds the Cupertino Icons font to your application.
