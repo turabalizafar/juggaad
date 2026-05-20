@@ -156,7 +156,7 @@ async def search_providers(
             distance_km=p["distance_km"]
         )
         try:
-            explanation = gc.generate(PROMPT_2_SYSTEM, user_prompt, max_tokens=80).strip()
+            explanation = gc.generate(PROMPT_2_SYSTEM, user_prompt, max_tokens=100).strip()
         except Exception:
             explanation = f"{p['name']} is a highly rated provider near you."
         
