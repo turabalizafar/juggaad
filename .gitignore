@@ -58,3 +58,6 @@ __pycache__/
 
 #test file
 test_e2e.py
+test_gemini.py
+
+scripts/
