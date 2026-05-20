@@ -52,8 +52,8 @@ async def create_booking(
     booking_id = f"bkg_{uuid.uuid4().hex[:8]}"
     tracking_id = f"TRK-{datetime.now(timezone.utc).strftime('%Y-%m%d')}-{uuid.uuid4().hex[:4].upper()}"
     
-    # Fake ETA for demo purposes (if we wanted true ETA we could store it in service_request during search, but 18 mins is a safe fallback)
-    eta_minutes = 18
+    # Use the real ETA from /search (passed forward by frontend), not a fake number
+    eta_minutes = request.agreed_eta_minutes
 
     booking_data = {
         "user_id": user_id,

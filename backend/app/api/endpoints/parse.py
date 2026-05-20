@@ -145,7 +145,7 @@ async def parse_request(
     else:
         req_status = "complete"
         trace_step = "intent_extracted"
-        ai_message = f"I understand! You need a {intent.service_type.replace('_', ' ')} in {intent.location_text} {intent.urgency} for {intent.issue_summary}."
+        ai_message = f"Got it! Let me find the best {intent.service_type.replace('_', ' ')} near {intent.location_text} for you right now."
         trace_msg = f"Service: {intent.service_type}, Location: {intent.location_text}, Time: {intent.urgency}"
 
     # 6. Append final trace step

@@ -94,12 +94,25 @@ async def search_providers(
             agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
         )
 
-    # 3. Pre-sort by straight-line distance to avoid exceeding Maps API limits (max 25)
+    # 3. Hard radial filter: discard providers beyond 100 km (prevents cross-province matches)
     for p in available_providers:
         p["_straight_dist"] = haversine_distance(user_lat, user_lng, p["lat"], p["lng"])
     
-    available_providers.sort(key=lambda x: x["_straight_dist"])
-    top_candidates = available_providers[:25]
+    close_providers = [p for p in available_providers if p["_straight_dist"] < 100]
+    
+    if not close_providers:
+        fc.append_trace(req_id, "ranking_complete", "No providers within 100 km radius.", now())
+        updated_doc = fc.get_document("service_requests", req_id) or {}
+        return SearchResponse(
+            request_id=req_id,
+            providers=[],
+            total_found=len(available_providers),
+            top_3_reasoning="No providers found within a reasonable distance from your location.",
+            agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
+        )
+    
+    close_providers.sort(key=lambda x: x["_straight_dist"])
+    top_candidates = close_providers[:25]
 
     # 4. Maps Distance Matrix
     fc.append_trace(
@@ -112,7 +125,7 @@ async def search_providers(
     matrix_results = mc.get_distance_matrix(user_lat, user_lng, destinations)
 
     # 5. Calculate Rank Score
-    # Formula: 0.4 * availability + 0.3 * distance + 0.2 * rating + 0.1 * response_time
+    # Absolute distance decay: score drops to 0 at 40km. 80% distance, 20% rating.
     ranked_providers = []
     for i, p in enumerate(top_candidates):
         dist_km = matrix_results[i]["distance_km"]
@@ -121,15 +134,13 @@ async def search_providers(
         # If Maps API failed for this route, fallback to straight-line
         if matrix_results[i]["status"] != "OK":
             dist_km = round(p["_straight_dist"], 2)
-            eta_min = max(1, int(dist_km * 3)) # roughly 3 mins per km
+            eta_min = max(1, int(dist_km * 3))  # roughly 3 mins per km
         
-        # Normalize scores (higher is better)
-        dist_score = 1.0 / (1.0 + dist_km)
+        # Absolute distance decay: 0 at 40+ km
+        dist_score = max(0.0, 1.0 - (dist_km / 40.0))
         rating_score = p.get("rating", 3.0) / 5.0
-        response_time = p.get("response_time_minutes", 60)
-        resp_score = 1.0 / (1.0 + (response_time / 60.0))
         
-        rank_score = (0.4 * 1.0) + (0.3 * dist_score) + (0.2 * rating_score) + (0.1 * resp_score)
+        rank_score = (0.8 * dist_score) + (0.2 * rating_score)
         
         ranked_providers.append({
             "id": p["id"],
@@ -158,7 +169,7 @@ async def search_providers(
             distance_km=p["distance_km"]
         )
         try:
-            explanation = gc.generate(PROMPT_2_SYSTEM, user_prompt, max_tokens=100).strip()
+            explanation = gc.generate(PROMPT_2_SYSTEM, user_prompt, max_tokens=512).strip()
         except Exception:
             explanation = f"{p['name']} is a highly rated provider near you."
         

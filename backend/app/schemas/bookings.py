@@ -14,6 +14,7 @@ class BookRequest(BaseModel):
     provider_id: str
     user_phone_number: str | None = None  # Optional — auto-filled from profile if omitted
     time_slot: str
+    agreed_eta_minutes: int  # Real ETA from /search (Maps API), passed forward by frontend
 
 
 class BookResponse(BaseModel):
