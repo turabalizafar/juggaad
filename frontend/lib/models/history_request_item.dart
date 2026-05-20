@@ -1,35 +1,31 @@
-class ParsedIntent {
+class HistoryRequestItem {
+  final String requestId;
   final String serviceType;
   final String locationText;
   final String urgency;
   final String issueSummary;
-  final String languageDetected;
+  final String createdAt;
+  final String status;
 
-  ParsedIntent({
+  HistoryRequestItem({
+    required this.requestId,
     required this.serviceType,
     required this.locationText,
     required this.urgency,
     required this.issueSummary,
-    required this.languageDetected,
+    required this.createdAt,
+    required this.status,
   });
 
-  factory ParsedIntent.fromJson(Map<String, dynamic> json) {
-    return ParsedIntent(
+  factory HistoryRequestItem.fromJson(Map<String, dynamic> json) {
+    return HistoryRequestItem(
+      requestId: json['request_id'] as String? ?? '',
       serviceType: json['service_type'] as String? ?? 'unknown',
       locationText: json['location_text'] as String? ?? 'Not specified',
       urgency: json['urgency'] as String? ?? 'flexible',
       issueSummary: json['issue_summary'] as String? ?? 'Service request',
-      languageDetected: json['language_detected'] as String? ?? 'unknown',
+      createdAt: json['created_at'] as String? ?? '',
+      status: json['status'] as String? ?? 'unknown',
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'service_type': serviceType,
-      'location_text': locationText,
-      'urgency': urgency,
-      'issue_summary': issueSummary,
-      'language_detected': languageDetected,
-    };
   }
 }
