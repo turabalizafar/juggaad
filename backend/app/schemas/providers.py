@@ -30,6 +30,8 @@ class Provider(BaseModel):
     base_price: int
     available: bool
     rank_score: float
+    lat: float
+    lng: float
     explanation: str | None = None
 
 

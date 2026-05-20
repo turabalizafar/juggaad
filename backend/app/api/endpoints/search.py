@@ -140,7 +140,9 @@ async def search_providers(
             "eta_minutes": eta_min,
             "base_price": p.get("base_price", 0),
             "available": True,
-            "rank_score": round(rank_score, 3)
+            "rank_score": round(rank_score, 3),
+            "lat": p["lat"],
+            "lng": p["lng"],
         })
 
     # Sort descending by rank score and take Top 3

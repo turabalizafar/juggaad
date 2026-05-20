@@ -113,6 +113,8 @@ Deterministic. Filters + ranks providers. Calls Maps Distance Matrix. Uses Gemin
       "base_price": 600,
       "available": true,
       "rank_score": 0.91,
+      "lat": 31.4812,
+      "lng": 74.3978,
       "explanation": "Bilal is the closest available technician with an excellent rating in DHA."
     }
   ],
