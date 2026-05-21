@@ -158,4 +158,139 @@ class AppTheme {
       ),
     );
   }
+
+  // ── Dark Theme ──────────────────────────────────────────────────────────
+  static ThemeData get darkTheme {
+    const Color darkPrimary = Color(0xFF4CDADB);
+    const Color darkOnPrimary = Color(0xFF003737);
+    const Color darkPrimaryContainer = Color(0xFF005050);
+    const Color darkOnPrimaryContainer = Color(0xFF6FF7F7);
+
+    const Color darkSecondary = Color(0xFFA8CECD);
+    const Color darkOnSecondary = Color(0xFF113636);
+    const Color darkSecondaryContainer = Color(0xFF2A4C4C);
+    const Color darkOnSecondaryContainer = Color(0xFFC4EAE9);
+
+    const Color darkTertiary = Color(0xFFD7B8F5);
+    const Color darkOnTertiary = Color(0xFF3D0072);
+    const Color darkTertiaryContainer = Color(0xFF7543A7);
+    const Color darkOnTertiaryContainer = Color(0xFFF0E0FF);
+
+    const Color darkError = Color(0xFFFFB4AB);
+    const Color darkOnError = Color(0xFF690005);
+    const Color darkErrorContainer = Color(0xFF93000A);
+    const Color darkOnErrorContainer = Color(0xFFFFDAD6);
+
+    const Color darkSurface = Color(0xFF0F1415);
+    const Color darkOnSurface = Color(0xFFDFE3E3);
+    const Color darkOnSurfaceVariant = Color(0xFFBDC9C8);
+    const Color darkOutline = Color(0xFF879393);
+    const Color darkOutlineVariant = Color(0xFF3D4949);
+
+    const Color darkSurfaceContainerLowest = Color(0xFF0A0F0F);
+    const Color darkSurfaceContainerLow = Color(0xFF171C1D);
+    const Color darkSurfaceContainer = Color(0xFF1B2121);
+    const Color darkSurfaceContainerHigh = Color(0xFF262B2C);
+    const Color darkSurfaceContainerHighest = Color(0xFF313636);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: darkPrimary,
+        onPrimary: darkOnPrimary,
+        primaryContainer: darkPrimaryContainer,
+        onPrimaryContainer: darkOnPrimaryContainer,
+        secondary: darkSecondary,
+        onSecondary: darkOnSecondary,
+        secondaryContainer: darkSecondaryContainer,
+        onSecondaryContainer: darkOnSecondaryContainer,
+        tertiary: darkTertiary,
+        onTertiary: darkOnTertiary,
+        tertiaryContainer: darkTertiaryContainer,
+        onTertiaryContainer: darkOnTertiaryContainer,
+        error: darkError,
+        onError: darkOnError,
+        errorContainer: darkErrorContainer,
+        onErrorContainer: darkOnErrorContainer,
+        surface: darkSurface,
+        onSurface: darkOnSurface,
+        surfaceContainerHighest: darkSurfaceContainerHighest,
+        onSurfaceVariant: darkOnSurfaceVariant,
+        outline: darkOutline,
+        outlineVariant: darkOutlineVariant,
+        surfaceContainerLowest: darkSurfaceContainerLowest,
+        surfaceContainerLow: darkSurfaceContainerLow,
+        surfaceContainer: darkSurfaceContainer,
+        surfaceContainerHigh: darkSurfaceContainerHigh,
+      ),
+      scaffoldBackgroundColor: darkSurface,
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
+        displayLarge: GoogleFonts.inter(
+          fontSize: 32, fontWeight: FontWeight.w700, color: darkOnSurface,
+        ),
+        displayMedium: GoogleFonts.inter(
+          fontSize: 24, fontWeight: FontWeight.w600, color: darkOnSurface,
+        ),
+        titleLarge: GoogleFonts.inter(
+          fontSize: 20, fontWeight: FontWeight.w600, color: darkOnSurface,
+        ),
+        bodyLarge: GoogleFonts.inter(
+          fontSize: 16, fontWeight: FontWeight.w400, color: darkOnSurface,
+        ),
+        bodyMedium: GoogleFonts.inter(
+          fontSize: 14, fontWeight: FontWeight.w400, color: darkOnSurfaceVariant,
+        ),
+        labelLarge: GoogleFonts.inter(
+          fontSize: 14, fontWeight: FontWeight.w500, color: darkOnSurfaceVariant,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: darkPrimary,
+          foregroundColor: darkOnPrimary,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: darkPrimary,
+          side: const BorderSide(color: darkOutlineVariant),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkSurfaceContainerLow,
+        contentPadding: const EdgeInsets.all(16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: darkOutlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: darkOutlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: darkPrimary, width: 2),
+        ),
+        hintStyle: GoogleFonts.inter(color: darkOnSurfaceVariant),
+      ),
+      cardTheme: CardThemeData(
+        color: darkSurfaceContainerLowest,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: darkOutlineVariant),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+    );
+  }
 }

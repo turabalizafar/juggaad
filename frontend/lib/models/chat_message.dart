@@ -8,4 +8,11 @@ class ChatMessage {
     required this.isUser,
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
+
+  String get role => isUser ? 'user' : 'assistant';
+
+  Map<String, String> toApiMap() => {
+    'role': role,
+    'content': text,
+  };
 }

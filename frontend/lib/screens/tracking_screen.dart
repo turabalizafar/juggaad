@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/orchestration_provider.dart';
 import '../providers/service_providers.dart';
+import '../providers/history_provider.dart';
+
+enum TrackingPhase { waiting, arrived, inProgress, completed }
 
 class TrackingScreen extends ConsumerStatefulWidget {
   const TrackingScreen({super.key});
@@ -15,25 +18,8 @@ class TrackingScreen extends ConsumerStatefulWidget {
 
 class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   GoogleMapController? _mapController;
-  Position? _userPosition;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserLocation();
-  }
-
-  Future<void> _fetchUserLocation() async {
-    final locationService = ref.read(locationServiceProvider);
-    final position = await locationService.getCurrentPosition();
-    if (mounted) {
-      setState(() {
-        _userPosition = position;
-        _isLoading = false;
-      });
-    }
-  }
+  TrackingPhase _phase = TrackingPhase.waiting;
+  int _rating = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +38,11 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
     }
 
     final providerLatLng = LatLng(provider.lat, provider.lng);
-    LatLng userLatLng = const LatLng(31.5204, 74.3587); // Default
-    if (_userPosition != null) {
-      userLatLng = LatLng(_userPosition!.latitude, _userPosition!.longitude);
-    }
+    // Use the search origin coordinates (the location from the prompt) rather than live GPS
+    final userLatLng = LatLng(
+      orchestrationNotifier.searchOriginLat ?? 31.5204,
+      orchestrationNotifier.searchOriginLng ?? 74.3587,
+    );
 
     // Midpoint for camera
     final midLat = (userLatLng.latitude + providerLatLng.latitude) / 2;
@@ -70,7 +57,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
         markerId: const MarkerId('user'),
         position: userLatLng,
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        infoWindow: const InfoWindow(title: 'You'),
+        infoWindow: const InfoWindow(title: 'Service Location'),
       ),
       Marker(
         markerId: const MarkerId('provider'),
@@ -82,18 +69,18 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Track Provider'),
+        title: Text(_phase == TrackingPhase.completed ? 'Service Complete' : 'Track Provider'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
+            // Invalidate history cache so the booking appears when user checks history
+            ref.invalidate(historyBookingsProvider);
             ref.read(orchestrationProvider.notifier).setIdle();
             Navigator.of(context).popUntil((route) => route.isFirst);
           },
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
+      body: Stack(
               children: [
                 // Map Background
                 GoogleMap(
@@ -104,7 +91,6 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                     // Fit bounds
                     Future.delayed(const Duration(milliseconds: 500), () {
                       if (_mapController != null) {
-                        // Guard: if coordinates are identical, skip bounds fitting
                         if (userLatLng.latitude == providerLatLng.latitude &&
                             userLatLng.longitude == providerLatLng.longitude) {
                           return;
@@ -121,7 +107,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                       }
                     });
                   },
-                  myLocationEnabled: false, // Using custom marker
+                  myLocationEnabled: false,
                   zoomControlsEnabled: false,
                 ),
                 
@@ -166,17 +152,31 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: colorScheme.tertiaryContainer,
+                            color: _phase == TrackingPhase.completed 
+                                ? colorScheme.primaryContainer
+                                : colorScheme.tertiaryContainer,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.timer, size: 16, color: colorScheme.onTertiaryContainer),
+                              Icon(
+                                _phase == TrackingPhase.completed 
+                                    ? Icons.check_circle 
+                                    : Icons.timer, 
+                                size: 16, 
+                                color: _phase == TrackingPhase.completed 
+                                    ? colorScheme.primary 
+                                    : colorScheme.onTertiaryContainer,
+                              ),
                               const SizedBox(width: 4),
                               Text(
-                                '${bookResponse.etaMinutes} mins',
+                                _phase == TrackingPhase.completed 
+                                    ? 'Done' 
+                                    : '~${bookResponse.etaMinutes} mins',
                                 style: theme.textTheme.labelLarge?.copyWith(
-                                  color: colorScheme.onTertiaryContainer,
+                                  color: _phase == TrackingPhase.completed 
+                                      ? colorScheme.primary 
+                                      : colorScheme.onTertiaryContainer,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -240,7 +240,9 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                             IconButton(
                               icon: const Icon(Icons.call),
                               color: colorScheme.primary,
-                              onPressed: () {},
+                              onPressed: () {
+                                launchUrl(Uri.parse('tel:${provider.phoneNumber}'));
+                              },
                             ),
                           ],
                         ),
@@ -251,25 +253,8 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                         
                         const SizedBox(height: 24),
                         
-                        // Actions
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              final apiService = ref.read(apiServiceProvider);
-                              apiService.sendFollowup(bookResponse.bookingId, 'pre_arrival');
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Follow-up sent to provider.')),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colorScheme.primaryContainer,
-                              foregroundColor: colorScheme.onPrimaryContainer,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: const Text('Send Follow-up'),
-                          ),
-                        ),
+                        // Phase-dependent actions
+                        _buildPhaseActions(theme, bookResponse.bookingId),
                       ],
                     ),
                   ),
@@ -279,8 +264,215 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
     );
   }
 
+  Widget _buildPhaseActions(ThemeData theme, String bookingId) {
+    final colorScheme = theme.colorScheme;
+
+    switch (_phase) {
+      case TrackingPhase.waiting:
+        return Column(
+          children: [
+            // Send follow-up
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  final apiService = ref.read(apiServiceProvider);
+                  apiService.sendFollowup(bookingId, 'pre_arrival');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Follow-up sent to provider.')),
+                  );
+                },
+                icon: const Icon(Icons.send),
+                label: const Text('Send Follow-up'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Mark as arrived
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() => _phase = TrackingPhase.arrived);
+                },
+                icon: const Icon(Icons.location_on),
+                label: const Text('Provider Has Arrived'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case TrackingPhase.arrived:
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Provider has arrived!',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onSecondaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() => _phase = TrackingPhase.inProgress);
+                },
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Service Started'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.tertiary,
+                  foregroundColor: colorScheme.onTertiary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case TrackingPhase.inProgress:
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.engineering, color: colorScheme.onTertiaryContainer),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Service in progress...',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() => _phase = TrackingPhase.completed);
+                },
+                icon: const Icon(Icons.check),
+                label: const Text('Mark as Completed'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case TrackingPhase.completed:
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.star, size: 32, color: colorScheme.primary),
+                  const SizedBox(height: 8),
+                  Text(
+                    'How was the service?',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return GestureDetector(
+                        onTap: () => setState(() => _rating = index + 1),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(
+                            index < _rating ? Icons.star : Icons.star_border,
+                            size: 36,
+                            color: index < _rating ? Colors.amber : colorScheme.outline,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _rating > 0 ? () {
+                  // Send completion followup
+                  final apiService = ref.read(apiServiceProvider);
+                  apiService.sendFollowup(bookingId, 'completed');
+                  
+                  // Invalidate history so it refetches with updated status
+                  ref.invalidate(historyBookingsProvider);
+                  ref.read(orchestrationProvider.notifier).setIdle();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Thank you for rating! ($_rating/5 stars)'),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                  );
+                } : null,
+                icon: const Icon(Icons.home),
+                label: const Text('Submit & Go Home'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
   Widget _buildTimeline(ThemeData theme) {
     final colorScheme = theme.colorScheme;
+    final phaseIndex = _phase.index; // 0=waiting, 1=arrived, 2=inProgress, 3=completed
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,23 +492,23 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
         ),
         _buildTimelineStep(
           theme: theme,
-          title: 'Distance',
+          title: 'En Route',
           icon: Icons.directions_car,
-          isActive: true,
-          isCompleted: false, // Current step
+          isActive: phaseIndex >= 0,
+          isCompleted: phaseIndex >= 1,
         ),
         Expanded(
           child: Container(
             height: 2,
-            color: colorScheme.surfaceContainerHigh,
+            color: phaseIndex >= 2 ? colorScheme.primary : colorScheme.surfaceContainerHigh,
           ),
         ),
         _buildTimelineStep(
           theme: theme,
           title: 'Completed',
           icon: Icons.home_repair_service,
-          isActive: false,
-          isCompleted: false,
+          isActive: phaseIndex >= 2,
+          isCompleted: phaseIndex >= 3,
         ),
       ],
     );

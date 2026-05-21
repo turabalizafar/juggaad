@@ -18,7 +18,8 @@ class AuthService {
       } else {
         // Mobile sign-in using google_sign_in 7.x API
         if (!_initialized) {
-          await GoogleSignIn.instance.initialize();
+          const String webClientId = '968327078807-4bdrteo25acsl4rkq930rgos9mlpe14j.apps.googleusercontent.com';
+          await GoogleSignIn.instance.initialize(serverClientId: webClientId);
           _initialized = true;
         }
 

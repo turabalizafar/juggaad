@@ -93,3 +93,37 @@ class MapsClient:
                 })
 
         return results
+
+    def geocode(self, address: str) -> tuple[float, float] | None:
+        """
+        Geocode an address string to (lat, lng) using Google Maps Geocoding API.
+
+        Args:
+            address: Human-readable address (e.g., "DHA Lahore").
+
+        Returns:
+            Tuple of (latitude, longitude) or None if geocoding fails.
+        """
+        url = "https://maps.googleapis.com/maps/api/geocode/json"
+        params = {
+            "address": address,
+            "key": self._api_key,
+            "region": "pk",  # Bias towards Pakistan
+            "components": "country:PK",
+        }
+
+        try:
+            resp = requests.get(url, params=params, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+
+            if data.get("status") == "OK" and data.get("results"):
+                location = data["results"][0]["geometry"]["location"]
+                return (location["lat"], location["lng"])
+            
+            print(f"[GEOCODE] No results for '{address}': {data.get('status')}")
+            return None
+
+        except Exception as e:
+            print(f"[GEOCODE ERROR] {e}")
+            return None

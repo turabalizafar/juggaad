@@ -47,3 +47,5 @@ class SearchResponse(BaseModel):
     top_3_reasoning: str
     ai_header_text: str
     agent_trace: list[TraceStep] = []
+    search_origin_lat: float | None = None
+    search_origin_lng: float | None = None

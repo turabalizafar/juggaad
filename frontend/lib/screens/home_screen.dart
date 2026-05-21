@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/chat_provider.dart';
 import '../providers/orchestration_provider.dart';
 import '../providers/trace_stream_provider.dart';
@@ -69,7 +70,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(Icons.bolt, color: colorScheme.primary),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SvgPicture.asset(
+                'lib/assets/Juggaad.svg',
+                width: 32,
+                height: 32,
+              ),
+            ),
             const SizedBox(width: 8),
             Text(
               'Jugaad',

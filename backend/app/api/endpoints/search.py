@@ -56,12 +56,35 @@ async def search_providers(
     if not doc:
         raise HTTPException(status_code=404, detail="Service request not found.")
 
-    # 1b. Fallback: if frontend didn't send real coords, use stored GPS from /parse
+    # 1b. Determine search origin: geocode the location_text, or use GPS if __CURRENT_LOCATION__
+    location_text = request.location_text
     user_lat = request.user_lat
     user_lng = request.user_lng
-    if user_lat == 0.0 and user_lng == 0.0:
-        user_lat = doc.get("user_lat", 0.0)
-        user_lng = doc.get("user_lng", 0.0)
+
+    if location_text and location_text != "__CURRENT_LOCATION__":
+        # Geocode the named location
+        geocoded = mc.geocode(location_text)
+        if geocoded:
+            user_lat = geocoded[0]
+            user_lng = geocoded[1]
+            print(f"[SEARCH] Geocoded '{location_text}' -> ({user_lat}, {user_lng})")
+        else:
+            print(f"[SEARCH] Geocoding failed for '{location_text}', falling back to device GPS")
+            # Fall back to device GPS
+            if user_lat == 0.0 and user_lng == 0.0:
+                user_lat = doc.get("user_lat", 31.5204)
+                user_lng = doc.get("user_lng", 74.3587)
+    else:
+        # __CURRENT_LOCATION__ or no location: use device GPS
+        if user_lat == 0.0 and user_lng == 0.0:
+            user_lat = doc.get("user_lat", 31.5204)
+            user_lng = doc.get("user_lng", 74.3587)
+
+    # Store the actual origin coordinates used for this search
+    fc.update_document("service_requests", req_id, {
+        "search_origin_lat": user_lat,
+        "search_origin_lng": user_lng,
+    })
 
     # 2. Fetch providers from Firestore
     fc.append_trace(
@@ -92,7 +115,9 @@ async def search_providers(
             total_found=0,
             top_3_reasoning="Unfortunately, no available providers were found in your area.",
             ai_header_text="No Matches Found",
-            agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
+            agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])],
+            search_origin_lat=user_lat,
+            search_origin_lng=user_lng,
         )
 
     # 3. Hard radial filter: discard providers beyond 100 km (prevents cross-province matches)
@@ -110,7 +135,9 @@ async def search_providers(
             total_found=len(available_providers),
             top_3_reasoning="No providers found within a reasonable distance from your location.",
             ai_header_text="No Matches Found",
-            agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])]
+            agent_trace=[TraceStep(**ts) for ts in updated_doc.get("agent_trace", [])],
+            search_origin_lat=user_lat,
+            search_origin_lng=user_lng,
         )
     
     close_providers.sort(key=lambda x: x["_straight_dist"])
@@ -208,5 +235,7 @@ async def search_providers(
         total_found=len(available_providers),
         top_3_reasoning="These providers were selected based on their proximity, high ratings, and availability.",
         ai_header_text=ai_header_text,
-        agent_trace=agent_trace
+        agent_trace=agent_trace,
+        search_origin_lat=user_lat,
+        search_origin_lng=user_lng,
     )

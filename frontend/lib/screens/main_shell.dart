@@ -30,6 +30,7 @@ class _MainShellState extends State<MainShell> {
         onTap: (index) => setState(() => _currentIndex = index),
         selectedItemColor: colorScheme.primary,
         unselectedItemColor: colorScheme.outline,
+        backgroundColor: colorScheme.surface,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),

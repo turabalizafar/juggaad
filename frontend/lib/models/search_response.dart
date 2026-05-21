@@ -8,6 +8,8 @@ class SearchResponse {
   final String top3Reasoning;
   final String aiHeaderText;
   final List<AgentTrace> agentTrace;
+  final double? searchOriginLat;
+  final double? searchOriginLng;
 
   SearchResponse({
     required this.requestId,
@@ -16,6 +18,8 @@ class SearchResponse {
     required this.top3Reasoning,
     required this.aiHeaderText,
     required this.agentTrace,
+    this.searchOriginLat,
+    this.searchOriginLng,
   });
 
   factory SearchResponse.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class SearchResponse {
               ?.map((e) => AgentTrace.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      searchOriginLat: (json['search_origin_lat'] as num?)?.toDouble(),
+      searchOriginLng: (json['search_origin_lng'] as num?)?.toDouble(),
     );
   }
 }

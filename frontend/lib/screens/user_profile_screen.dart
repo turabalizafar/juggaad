@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/profile_provider.dart';
 import '../providers/service_providers.dart';
+import '../providers/theme_provider.dart';
 import 'login_screen.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
@@ -226,9 +227,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         iconColor: colorScheme.tertiary,
                         label: 'Dark Theme',
                         trailing: Switch(
-                          value: false,
+                          value: ref.watch(themeProvider) == ThemeMode.dark,
                           onChanged: (val) {
-                            // MVP: no dark mode yet
+                            ref.read(themeProvider.notifier).toggle();
                           },
                           activeThumbColor: colorScheme.primary,
                           inactiveTrackColor: colorScheme.surfaceContainerHighest,

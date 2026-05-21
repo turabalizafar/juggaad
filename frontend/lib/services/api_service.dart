@@ -35,21 +35,6 @@ class ApiService {
     ));
   }
 
-  Future<ParseResponse> parseRequest({
-    required String rawText,
-    String? languageHint,
-    double? userLat,
-    double? userLng,
-  }) async {
-    final response = await _dio.post('/parse', data: {
-      'raw_text': rawText,
-      if (languageHint != null) 'language_hint': languageHint,
-      if (userLat != null) 'user_lat': userLat,
-      if (userLng != null) 'user_lng': userLng,
-    });
-    return ParseResponse.fromJson(response.data);
-  }
-
   Future<SearchResponse> searchProviders({
     required String requestId,
     required String serviceType,
@@ -122,5 +107,18 @@ class ApiService {
   Future<UserProfile> getProfile() async {
     final response = await _dio.get('/profile');
     return UserProfile.fromJson(response.data);
+  }
+
+  Future<ParseResponse> sendChat({
+    required List<Map<String, String>> messages,
+    double? userLat,
+    double? userLng,
+  }) async {
+    final response = await _dio.post('/chat', data: {
+      'messages': messages,
+      if (userLat != null) 'user_lat': userLat,
+      if (userLng != null) 'user_lng': userLng,
+    });
+    return ParseResponse.fromJson(response.data);
   }
 }

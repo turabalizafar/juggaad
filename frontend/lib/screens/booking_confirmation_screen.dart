@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/orchestration_provider.dart';
 import 'tracking_screen.dart';
 
@@ -155,7 +156,7 @@ class BookingConfirmationScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // MVP: Call functionality
+                    launchUrl(Uri.parse('tel:${bookResponse.providerPhone}'));
                   },
                   icon: const Icon(Icons.call),
                   label: Text('Call ${bookResponse.providerName}'),

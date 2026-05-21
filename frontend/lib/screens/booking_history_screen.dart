@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/history_provider.dart';
 import '../models/history_booking_item.dart';
 
@@ -47,18 +48,15 @@ class BookingHistoryScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.history, size: 64, color: colorScheme.outlineVariant),
+                          Icon(
+                            Icons.history,
+                            size: 48,
+                            color: colorScheme.outline,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'No bookings yet',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Your service history will appear here.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
                               color: colorScheme.outline,
                             ),
                           ),
@@ -66,12 +64,22 @@ class BookingHistoryScreen extends ConsumerWidget {
                       ),
                     );
                   }
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: bookings.length,
-                    itemBuilder: (context, index) {
-                      return _BookingCard(booking: bookings[index]);
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(historyBookingsProvider);
                     },
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: bookings.length,
+                      itemBuilder: (context, index) {
+                        final booking = bookings[index];
+                        return GestureDetector(
+                          onTap: () => _onBookingTap(context, booking),
+                          child: _BookingCard(booking: booking),
+                        );
+                      },
+                    ),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -102,6 +110,114 @@ class BookingHistoryScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _onBookingTap(BuildContext context, HistoryBookingItem booking) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final statusNorm = booking.status.toLowerCase();
+
+    if (statusNorm == 'completed') {
+      // Show summary dialog for completed bookings
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(_formatServiceType(booking.serviceType)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _infoRow(Icons.person, 'Provider', booking.providerName),
+              const SizedBox(height: 8),
+              _infoRow(Icons.calendar_today, 'Date', _formatDate(booking.createdAt)),
+              const SizedBox(height: 8),
+              _infoRow(Icons.check_circle, 'Status', 'Completed'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } else if (statusNorm == 'cancelled') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This booking was cancelled.')),
+      );
+    } else {
+      // Active booking — show info dialog (tracking requires orchestration data that isn't available from history)
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          icon: Icon(Icons.info_outline, color: colorScheme.primary, size: 40),
+          title: const Text('Active Booking'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _infoRow(Icons.build, 'Service', _formatServiceType(booking.serviceType)),
+              const SizedBox(height: 8),
+              _infoRow(Icons.person, 'Provider', booking.providerName),
+              const SizedBox(height: 8),
+              _infoRow(Icons.schedule, 'Time Slot', booking.timeSlot.isNotEmpty ? booking.timeSlot : 'ASAP'),
+              const SizedBox(height: 16),
+              if (booking.providerPhone.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      launchUrl(Uri.parse('tel:${booking.providerPhone}'));
+                    },
+                    icon: const Icon(Icons.call),
+                    label: Text('Call ${booking.providerName}'),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey),
+        const SizedBox(width: 8),
+        Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+        Expanded(child: Text(value)),
+      ],
+    );
+  }
+
+  String _formatServiceType(String serviceType) {
+    return serviceType.split('_').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+
+  String _formatDate(String isoDate) {
+    if (isoDate.isEmpty) return 'Unknown date';
+    try {
+      final date = DateTime.parse(isoDate);
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+      final ampm = date.hour >= 12 ? 'PM' : 'AM';
+      final minute = date.minute.toString().padLeft(2, '0');
+      return '${months[date.month - 1]} ${date.day}, ${date.year} • $hour:$minute $ampm';
+    } catch (_) {
+      return isoDate;
+    }
   }
 }
 

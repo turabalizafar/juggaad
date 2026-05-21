@@ -17,6 +17,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       ]);
 
   Future<void> sendParseRequest(String rawText, {String? languageHint}) async {
+    // Add user message to chat
     state = [...state, ChatMessage(text: rawText, isUser: true)];
 
     final orchestrationNotifier = _ref.read(orchestrationProvider.notifier);
@@ -26,15 +27,17 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       final locationService = _ref.read(locationServiceProvider);
       final position = await locationService.getCurrentPosition();
 
+      // Build conversation history from state (last 8 messages)
+      final messages = state.map((m) => m.toApiMap()).toList();
+
       final apiService = _ref.read(apiServiceProvider);
-      final response = await apiService.parseRequest(
-        rawText: rawText,
-        languageHint: languageHint,
+      final response = await apiService.sendChat(
+        messages: messages,
         userLat: position?.latitude,
         userLng: position?.longitude,
       );
 
-      if (response.status == 'incomplete') {
+      if (response.status == 'incomplete' || response.status == 'off_topic') {
         orchestrationNotifier.setIdle();
         state = [
           ...state,
@@ -47,13 +50,22 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
           ChatMessage(text: response.aiMessage, isUser: false),
         ];
       } else {
+        // Complete — move to parsed preview
         orchestrationNotifier.setParsedPreview(response);
       }
     } catch (e) {
       orchestrationNotifier.setIdle();
+      String errorMsg = 'Something went wrong. Please try again.';
+      if (e.toString().contains('DioException') && e.toString().contains('detail')) {
+        // Try to extract the detail message
+        final detailMatch = RegExp(r'"detail"\s*:\s*"([^"]+)"').firstMatch(e.toString());
+        if (detailMatch != null) {
+          errorMsg = detailMatch.group(1) ?? errorMsg;
+        }
+      }
       state = [
         ...state,
-        ChatMessage(text: 'Error processing request: $e', isUser: false),
+        ChatMessage(text: errorMsg, isUser: false),
       ];
     }
   }

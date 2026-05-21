@@ -26,6 +26,8 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
   ParseResponse? parseResponse;
   SearchResponse? searchResponse;
   BookResponse? bookResponse;
+  double? searchOriginLat;
+  double? searchOriginLng;
 
   void setIdle() {
     currentRequestId = null;
@@ -33,6 +35,8 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
     parseResponse = null;
     searchResponse = null;
     bookResponse = null;
+    searchOriginLat = null;
+    searchOriginLng = null;
     state = OrchestrationState.idle;
   }
 
@@ -68,14 +72,21 @@ class OrchestrationNotifier extends StateNotifier<OrchestrationState> {
       final position = await locationService.getCurrentPosition();
       
       final apiService = _ref.read(apiServiceProvider);
+      final searchLat = position?.latitude ?? 31.5204;
+      final searchLng = position?.longitude ?? 74.3587;
       final response = await apiService.searchProviders(
         requestId: currentRequestId!,
         serviceType: parseResponse!.intent.serviceType,
         locationText: parseResponse!.intent.locationText,
-        userLat: position?.latitude ?? 31.5204, // Default to Lahore
-        userLng: position?.longitude ?? 74.3587,
+        userLat: searchLat,
+        userLng: searchLng,
         urgency: parseResponse!.intent.urgency,
       );
+      
+      // Use the geocoded coordinates from the backend (if available)
+      // These are the ACTUAL location the user asked about, not device GPS
+      searchOriginLat = response.searchOriginLat ?? searchLat;
+      searchOriginLng = response.searchOriginLng ?? searchLng;
       
       setProviderResults(response);
     } catch (e) {
